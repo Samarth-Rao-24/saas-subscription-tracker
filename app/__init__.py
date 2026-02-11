@@ -1,7 +1,14 @@
-from flask import Flask
-
 def create_app():
-    app=Flask(__name__)
+    load_dotenv()
+
+    app = Flask(__name__)
+
+    env = os.getenv("FLASK_ENV", "development")
+
+    if env == "production":
+        app.config.from_object("app.config.ProductionConfig")
+    else:
+        app.config.from_object("app.config.DevelopmentConfig")
 
     @app.route("/")
     def home():
