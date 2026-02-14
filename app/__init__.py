@@ -1,3 +1,14 @@
+import os
+from flask import Flask
+from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy 
+from flask_migrate import Migrate 
+
+
+db=SQLAlchemy()
+migrate=Migrate()
+
+
 def create_app():
     load_dotenv()
 
@@ -9,6 +20,12 @@ def create_app():
         app.config.from_object("app.config.ProductionConfig")
     else:
         app.config.from_object("app.config.DevelopmentConfig")
+
+    db.init_app(app)
+    migrate.init_app(app,db)
+
+    from app.models import user
+
 
     @app.route("/")
     def home():
