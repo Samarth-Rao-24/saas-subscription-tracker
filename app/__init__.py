@@ -1,7 +1,8 @@
 import os
 from flask import Flask
 from dotenv import load_dotenv
-
+from flask import Flask, render_template
+from flask_login import login_required, current_user
 from app.extensions import db, migrate, login_manager
 
 
@@ -38,6 +39,12 @@ def create_app():
 
     @app.route("/")
     def home():
-        return "SaaS Subscription Tracker is running 🚀"
+        return render_template("home.html")
 
+    @app.route("/dashboard")
+    @login_required
+    def dashboard():
+        return render_template("dashboard.html")
+    
+    
     return app

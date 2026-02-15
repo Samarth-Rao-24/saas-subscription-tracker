@@ -34,7 +34,7 @@ def signup():
         flash("Account created successfully!")
         return redirect(url_for("auth.login"))
 
-    return render_template("signup.html")
+    return render_template("auth/signup.html")
 
 @auth.route("/login",methods=["GET","POST"])
 def login():
@@ -50,7 +50,7 @@ def login():
 
         flash("Invalid credentials")
 
-    return render_template("login.html")
+    return render_template("auth/login.html")
 
 
 @auth.route("/logout")
