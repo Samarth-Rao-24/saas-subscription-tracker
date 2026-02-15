@@ -25,7 +25,7 @@ def signup():
         new_user=User(
             username=username,
             email=email,
-            password_hash=hashed_password
+            password=hashed_password
         )
 
         db.session.add(new_user)
@@ -44,7 +44,7 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
-        if user and check_password_hash(user.password_hash, password):
+        if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for("home"))
 

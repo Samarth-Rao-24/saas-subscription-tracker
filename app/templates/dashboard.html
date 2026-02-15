@@ -3,5 +3,22 @@
 {% block content %}
 <h2>Dashboard</h2>
 <p>Welcome, {{ current_user.username }} 👋</p>
-<p>This is your subscription control center.</p>
+
+<a href="{{ url_for('subscription.add_subscription') }}" 
+   class="btn btn-primary mb-3">
+   + Add Subscription
+</a>
+
+{% if current_user.subscriptions %}
+    <ul class="list-group">
+        {% for sub in current_user.subscriptions %}
+            <li class="list-group-item">
+                {{ sub.name }} — ₹{{ sub.price }} — Next Billing: {{ sub.billing_date }}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No subscriptions yet.</p>
+{% endif %}
+
 {% endblock %}
