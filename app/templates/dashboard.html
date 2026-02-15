@@ -1,24 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Dashboard</h2>
-<p>Welcome, {{ current_user.username }} 👋</p>
+<div class="container mt-4">
 
-<a href="{{ url_for('subscription.add_subscription') }}" 
-   class="btn btn-primary mb-3">
-   + Add Subscription
-</a>
+    <h2>Dashboard</h2>
+    <p>Welcome, {{ current_user.username }} 👋</p>
 
-{% if current_user.subscriptions %}
-    <ul class="list-group">
-        {% for sub in current_user.subscriptions %}
-            <li class="list-group-item">
-                {{ sub.name }} — ₹{{ sub.price }} — Next Billing: {{ sub.billing_date }}
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No subscriptions yet.</p>
-{% endif %}
+    <a href="{{ url_for('subscription.add_subscription') }}" 
+       class="btn btn-primary mb-3">
+       + Add Subscription
+    </a>
 
+    {% if current_user.subscriptions %}
+
+
+
+        <div class="alert alert-info">
+            <strong>Monthly Recurring Total:</strong> ₹{{ total }}
+        </div>
+
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Billing Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subscriptions %}
+                <tr>
+                    <td>{{ sub.name }}</td>
+                    <td>₹{{ sub.price }}</td>
+                    <td>{{ sub.billing_date.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <a href="{{ url_for('subscription.delete_subscription', id=sub.id) }}" 
+                           class="btn btn-danger btn-sm">
+                           Delete
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <div class="alert alert-warning">
+            No subscriptions yet.
+        </div>
+    {% endif %}
+
+</div>
 {% endblock %}

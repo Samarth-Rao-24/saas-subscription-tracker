@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template
 from dotenv import load_dotenv
-from flask_login import login_required
+from flask_login import login_required,current_user
 from app.extensions import db, migrate, login_manager
 
 
@@ -46,6 +46,15 @@ def create_app():
     @app.route("/dashboard")
     @login_required
     def dashboard():
-        return render_template("dashboard.html")
+
+        subscriptions = current_user.subscriptions
+
+        total = sum(sub.price for sub in subscriptions)
+
+        return render_template(
+            "dashboard.html",
+            subscriptions=subscriptions,
+            total=total
+    )
 
     return app
