@@ -53,5 +53,30 @@ def delete_subscription(id):
     flash("Subscription deleted successfully.")
     return redirect(url_for("dashboard"))
 
+@subscription.route("/edit-subscription/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_subscription(id):
+
+    sub = Subscription.query.get_or_404(id)
+
+    # Security check
+    if sub.user_id != current_user.id:
+        flash("Unauthorized action.")
+        return redirect(url_for("auth.dashboard"))
+
+    if request.method == "POST":
+        sub.name = request.form.get("name")
+        sub.price = float(request.form.get("price"))
+        sub.billing_date = datetime.strptime(
+            request.form.get("billing_date"),
+            "%Y-%m-%d"
+        )
+
+        db.session.commit()
+        flash("Subscription updated successfully.")
+        return redirect(url_for("dashboard"))
+
+    return render_template("edit_subscription.html", sub=sub)
+
 
 

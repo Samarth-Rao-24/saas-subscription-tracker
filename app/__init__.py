@@ -3,7 +3,7 @@ from flask import Flask, render_template
 from dotenv import load_dotenv
 from flask_login import login_required,current_user
 from app.extensions import db, migrate, login_manager
-
+from datetime import datetime,timedelta
 
 def create_app():
     load_dotenv()
@@ -51,10 +51,20 @@ def create_app():
 
         total = sum(sub.price for sub in subscriptions)
 
+        today=datetime.now().date()
+        next_7_days=today + timedelta(days=7)
+
+        upcoming=[
+            sub for sub in subscriptions
+            if today <= sub.billing_date <= next_7_days
+        ]
+
+
         return render_template(
             "dashboard.html",
             subscriptions=subscriptions,
-            total=total
+            total=total,
+            upcoming=upcoming
     )
 
     return app
