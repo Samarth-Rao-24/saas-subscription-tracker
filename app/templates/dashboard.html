@@ -3,29 +3,57 @@
 {% block content %}
 <div class="container mt-4">
 
-    <h2>Dashboard</h2>
-    <p>Welcome, {{ current_user.username }} 👋</p>
+    <h2 class="mb-2">Dashboard</h2>
+    <p class="text-muted">Welcome back, {{ current_user.username }} 👋</p>
 
     <a href="{{ url_for('subscription.add_subscription') }}" 
-       class="btn btn-primary mb-3">
+       class="btn btn-primary mb-4">
        + Add Subscription
     </a>
 
     {% if subscriptions %}
 
-        <!-- Monthly Recurring Total -->
-        <div class="alert alert-info">
-            <strong>Monthly Recurring Total:</strong> ₹{{ "%.2f"|format(total) }}
+        <!-- ===== SUMMARY CARDS ===== -->
+        <div class="row mb-4">
+
+            <div class="col-md-4 mb-3">
+                <div class="card text-white bg-primary shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Monthly Cost</h6>
+                        <h3>₹{{ "%.2f"|format(total) }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card text-white bg-success shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Yearly Projection</h6>
+                        <h3>₹{{ "%.2f"|format(yearly_total) }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card text-white bg-dark shadow-sm">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Active Subscriptions</h6>
+                        <h3>{{ subscriptions|length }}</h3>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Upcoming Bills Section -->
+        <!-- ===== UPCOMING BILLS ===== -->
         {% if upcoming %}
-        <div class="alert alert-warning mt-3">
-            <h5>⚠ Upcoming Bills (Next 7 Days)</h5>
+        <div class="alert alert-warning shadow-sm">
+            <h5 class="mb-2">⚠ Upcoming Bills (Next 7 Days)</h5>
             <ul class="mb-0">
                 {% for sub in upcoming %}
                     <li>
-                        {{ sub.name }} — ₹{{ sub.price }} — 
+                        <strong>{{ sub.name }}</strong> —
+                        ₹{{ sub.price }} —
                         {{ sub.billing_date.strftime('%Y-%m-%d') }}
                     </li>
                 {% endfor %}
@@ -33,37 +61,51 @@
         </div>
         {% endif %}
 
-        <!-- Subscription Table -->
-        <table class="table table-bordered table-striped mt-3">
-            <thead class="table-dark">
-                <tr>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Billing Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sub in subscriptions %}
-                <tr>
-                    <td>{{ sub.name }}</td>
-                    <td>₹{{ sub.price }}</td>
-                    <td>{{ sub.billing_date.strftime('%Y-%m-%d') }}</td>
-                    <td>
-                        <a href="{{ url_for('subscription.edit_subscription', id=sub.id) }}"
-                           class="btn btn-warning btn-sm">
-                           Edit
-                        </a>
+        <!-- ===== SUBSCRIPTION TABLE ===== -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-body p-0">
+                <table class="table table-bordered table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Billing Date</th>
+                            <th style="width: 180px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in subscriptions %}
+                        <tr>
+                            <td>{{ sub.name }}</td>
 
-                        <a href="{{ url_for('subscription.delete_subscription', id=sub.id) }}" 
-                           class="btn btn-danger btn-sm">
-                           Delete
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                            <!-- CATEGORY BADGE -->
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    {{ sub.category }}
+                                </span>
+                            </td>
+
+                            <td>₹{{ "%.2f"|format(sub.price) }}</td>
+                            <td>{{ sub.billing_date.strftime('%Y-%m-%d') }}</td>
+
+                            <td>
+                                <a href="{{ url_for('subscription.edit_subscription', id=sub.id) }}"
+                                   class="btn btn-warning btn-sm">
+                                   Edit
+                                </a>
+
+                                <a href="{{ url_for('subscription.delete_subscription', id=sub.id) }}" 
+                                   class="btn btn-danger btn-sm">
+                                   Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
     {% else %}
         <div class="alert alert-warning">

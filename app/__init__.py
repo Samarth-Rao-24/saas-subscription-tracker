@@ -59,11 +59,13 @@ def create_app():
             if today <= sub.billing_date <= next_7_days
         ]
 
+        yearly_total=total*12
 
         return render_template(
             "dashboard.html",
             subscriptions=subscriptions,
             total=total,
+            yearly_total=yearly_total,
             upcoming=upcoming
     )
 
