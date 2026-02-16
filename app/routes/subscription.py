@@ -6,33 +6,35 @@ from datetime import datetime
 
 subscription = Blueprint('subscription', __name__)
 
+
 @subscription.route('/add-subscription', methods=["GET", "POST"])
 @login_required
 def add_subscription():
-
     if request.method == "POST":
-        name = request.form.get("name")
-        price = request.form.get("price")
-        billing_date = request.form.get("billing_date")
-
         try:
+            name = request.form.get("name")
+            price = request.form.get("price")
+            billing_date = request.form.get("billing_date")
+            category = request.form.get("category")
+
             new_sub = Subscription(
                 name=name,
                 price=float(price),
                 billing_date=datetime.strptime(billing_date, "%Y-%m-%d"),
-                owner=current_user   # keep this as per your model
+                category=category,
+                owner=current_user
             )
 
             db.session.add(new_sub)
             db.session.commit()
 
-            flash("Subscription added successfully")
+            flash("Subscription added successfully.", "success")
             return redirect(url_for("dashboard"))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            print("🔥 ERROR:", e)
-            raise e
+            flash("Something went wrong while adding subscription.", "danger")
+            return redirect(url_for("subscription.add_subscription"))
 
     return render_template("add_subscription.html")
 
@@ -42,41 +44,44 @@ def add_subscription():
 def delete_subscription(id):
     sub = Subscription.query.get_or_404(id)
 
-    # Security check
     if sub.user_id != current_user.id:
-        flash("Unauthorized action.")
+        flash("Unauthorized action.", "danger")
         return redirect(url_for("dashboard"))
 
     db.session.delete(sub)
     db.session.commit()
 
-    flash("Subscription deleted successfully.")
+    flash("Subscription deleted successfully.", "success")
     return redirect(url_for("dashboard"))
+
 
 @subscription.route("/edit-subscription/<int:id>", methods=["GET", "POST"])
 @login_required
 def edit_subscription(id):
-
     sub = Subscription.query.get_or_404(id)
 
-    # Security check
     if sub.user_id != current_user.id:
-        flash("Unauthorized action.")
-        return redirect(url_for("auth.dashboard"))
-
-    if request.method == "POST":
-        sub.name = request.form.get("name")
-        sub.price = float(request.form.get("price"))
-        sub.billing_date = datetime.strptime(
-            request.form.get("billing_date"),
-            "%Y-%m-%d"
-        )
-
-        db.session.commit()
-        flash("Subscription updated successfully.")
+        flash("Unauthorized action.", "danger")
         return redirect(url_for("dashboard"))
 
+    if request.method == "POST":
+        try:
+            sub.name = request.form.get("name")
+            sub.price = float(request.form.get("price"))
+            sub.billing_date = datetime.strptime(
+                request.form.get("billing_date"),
+                "%Y-%m-%d"
+            )
+            sub.category = request.form.get("category")
+
+            db.session.commit()
+
+            flash("Subscription updated successfully.", "success")
+            return redirect(url_for("dashboard"))
+
+        except Exception:
+            db.session.rollback()
+            flash("Something went wrong while updating.", "danger")
+            return redirect(url_for("subscription.edit_subscription", id=id))
+
     return render_template("edit_subscription.html", sub=sub)
-
-
-
