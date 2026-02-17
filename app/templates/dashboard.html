@@ -13,7 +13,6 @@
 
     {% if subscriptions %}
 
-        <!-- ===== SUMMARY CARDS ===== -->
         <div class="row mb-4">
 
             <div class="col-md-4 mb-3">
@@ -45,7 +44,6 @@
 
         </div>
 
-        <!-- ===== UPCOMING BILLS ===== -->
         {% if upcoming %}
         <div class="alert alert-warning shadow-sm">
             <h5 class="mb-2">⚠ Upcoming Bills (Next 7 Days)</h5>
@@ -53,7 +51,7 @@
                 {% for sub in upcoming %}
                     <li>
                         <strong>{{ sub.name }}</strong> —
-                        ₹{{ sub.price }} —
+                        ₹{{ "%.2f"|format(sub.price) }} —
                         {{ sub.billing_date.strftime('%Y-%m-%d') }}
                     </li>
                 {% endfor %}
@@ -61,7 +59,6 @@
         </div>
         {% endif %}
 
-        <!-- ===== SUBSCRIPTION TABLE ===== -->
         <div class="card shadow-sm mt-4">
             <div class="card-body p-0">
                 <table class="table table-bordered table-striped mb-0">
@@ -78,23 +75,18 @@
                         {% for sub in subscriptions %}
                         <tr>
                             <td>{{ sub.name }}</td>
-
-                            <!-- CATEGORY BADGE -->
                             <td>
                                 <span class="badge bg-info text-dark">
                                     {{ sub.category }}
                                 </span>
                             </td>
-
                             <td>₹{{ "%.2f"|format(sub.price) }}</td>
                             <td>{{ sub.billing_date.strftime('%Y-%m-%d') }}</td>
-
                             <td>
                                 <a href="{{ url_for('subscription.edit_subscription', id=sub.id) }}"
                                    class="btn btn-warning btn-sm">
                                    Edit
                                 </a>
-
                                 <a href="{{ url_for('subscription.delete_subscription', id=sub.id) }}" 
                                    class="btn btn-danger btn-sm">
                                    Delete
@@ -107,6 +99,15 @@
             </div>
         </div>
 
+        {% if category_labels %}
+        <div class="card mt-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">Spending by Category</h5>
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
     {% else %}
         <div class="alert alert-warning">
             No subscriptions yet.
@@ -114,4 +115,42 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+
+{% block scripts %}
+{% if category_labels %}
+<script>
+    const ctx = document.getElementById('categoryChart');
+
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: {{ category_labels | tojson }},
+                datasets: [{
+                    data: {{ category_values | tojson }},
+                    backgroundColor: [
+                        '#0d6efd',
+                        '#198754',
+                        '#dc3545',
+                        '#ffc107',
+                        '#6f42c1',
+                        '#20c997',
+                        '#fd7e14'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endif %}
 {% endblock %}
