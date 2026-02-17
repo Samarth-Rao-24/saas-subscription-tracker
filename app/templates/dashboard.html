@@ -109,9 +109,11 @@
 
         {% if category_labels %}
         <div class="card mt-4 shadow-sm">
-            <div class="card-body">
+            <div class="card-body text-center">
                 <h5 class="mb-3">Spending by Category</h5>
-                <canvas id="categoryChart"></canvas>
+                <div style="max-width: 400px; margin: auto;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
             </div>
         </div>
         {% endif %}
@@ -120,7 +122,9 @@
         <div class="card mt-4 shadow-sm">
             <div class="card-body">
                 <h5 class="mb-3">Monthly Spending Trend</h5>
-                <canvas id="monthlyChart"></canvas>
+                <div style="height: 300px;">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
             </div>
         </div>
         {% endif %}
@@ -161,6 +165,7 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'bottom'
@@ -192,6 +197,7 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: true
