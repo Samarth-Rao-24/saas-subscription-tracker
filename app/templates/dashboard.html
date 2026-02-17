@@ -10,6 +10,11 @@
        class="btn btn-primary mb-4">
        + Add Subscription
     </a>
+    <a href="{{ url_for('subscription.export_subscription') }}" 
+      class="btn btn-success mb-4 ms-2">
+    ⬇ Download CSV
+    </a>
+
 
     {% if subscriptions %}
 
@@ -69,6 +74,8 @@
                             <th>Price</th>
                             <th>Billing Date</th>
                             <th style="width: 180px;">Action</th>
+                            <th>Frequency</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -92,6 +99,7 @@
                                    Delete
                                 </a>
                             </td>
+                            <td>{{sub.frequency}}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -108,6 +116,15 @@
         </div>
         {% endif %}
 
+        {% if monthly_labels %}
+        <div class="card mt-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">Monthly Spending Trend</h5>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+
     {% else %}
         <div class="alert alert-warning">
             No subscriptions yet.
@@ -119,12 +136,13 @@
 
 
 {% block scripts %}
+
 {% if category_labels %}
 <script>
-    const ctx = document.getElementById('categoryChart');
+    const categoryCtx = document.getElementById('categoryChart');
 
-    if (ctx) {
-        new Chart(ctx, {
+    if (categoryCtx) {
+        new Chart(categoryCtx, {
             type: 'pie',
             data: {
                 labels: {{ category_labels | tojson }},
@@ -153,4 +171,36 @@
     }
 </script>
 {% endif %}
+
+{% if monthly_labels %}
+<script>
+    const monthlyCtx = document.getElementById('monthlyChart');
+
+    if (monthlyCtx) {
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: {{ monthly_labels | tojson }},
+                datasets: [{
+                    label: 'Monthly Spending',
+                    data: {{ monthly_values | tojson }},
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13,110,253,0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endif %}
+
 {% endblock %}

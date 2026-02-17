@@ -3,6 +3,9 @@ from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import Subscription
 from datetime import datetime
+import csv
+from io import StringIO
+from flask import Response
 
 subscription = Blueprint('subscription', __name__)
 
@@ -16,12 +19,13 @@ def add_subscription():
             price = request.form.get("price")
             billing_date = request.form.get("billing_date")
             category = request.form.get("category")
-
+            frequency=request.form.get("frequency")
             new_sub = Subscription(
                 name=name,
                 price=float(price),
                 billing_date=datetime.strptime(billing_date, "%Y-%m-%d"),
                 category=category,
+                frequency=frequency,
                 owner=current_user
             )
 
@@ -85,3 +89,30 @@ def edit_subscription(id):
             return redirect(url_for("subscription.edit_subscription", id=id))
 
     return render_template("edit_subscription.html", sub=sub)
+
+
+@subscription.route("/export")
+@login_required
+def export_subscription():
+    subscriptions =Subscription.query.filter_by(user_id=current_user.id).all()
+
+    si=StringIO()
+    writer=csv.writer(si)
+
+    writer.writerow(["Name","Category","Price","Billing Date"])
+
+    for sub in subscriptions:
+        writer.writerow([
+            sub.name,
+            sub.category,
+            sub.price,
+            sub.billing_date.strftime("%Y-%m-%d")
+        ])
+
+    output=si.getvalue()
+
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition":"attachment;filename=subscriptions.csv"}
+    )

@@ -46,7 +46,13 @@ def create_app():
 
         subscriptions = current_user.subscriptions
 
-        total = sum(sub.price for sub in subscriptions)
+        total=0
+
+        for sub in subscriptions:
+            if sub.frequency=="Monthly":
+                total+=sub.price
+            elif sub.frequency =="Yearly":
+                total+=sub.price/12
 
         today = datetime.now().date()
         next_7_days = today + timedelta(days=7)
@@ -56,7 +62,14 @@ def create_app():
             if today <= sub.billing_date <= next_7_days
         ]
 
-        yearly_total = total * 12
+        yearly_total = 0
+
+        for sub in subscriptions:
+            if sub.frequency == "Monthly":
+                yearly_total += sub.price * 12
+            elif sub.frequency == "Yearly":
+                yearly_total += sub.price
+        
 
         category_totals = defaultdict(float)
 
@@ -66,6 +79,16 @@ def create_app():
         category_labels = list(category_totals.keys())
         category_values = list(category_totals.values())
 
+        monthly_totals = defaultdict(float)
+
+        for sub in subscriptions:
+            month = sub.billing_date.strftime("%Y-%m")
+            monthly_totals[month] += sub.price
+
+        monthly_labels = list(monthly_totals.keys())
+        monthly_values = list(monthly_totals.values())
+
+
         return render_template(
             "dashboard.html",
             subscriptions=subscriptions,
@@ -73,7 +96,9 @@ def create_app():
             yearly_total=yearly_total,
             upcoming=upcoming,
             category_labels=category_labels,
-            category_values=category_values
+            category_values=category_values,
+            monthly_labels=monthly_labels,
+            monthly_values=monthly_values
         )
 
     return app
