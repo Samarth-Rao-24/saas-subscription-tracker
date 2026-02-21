@@ -3,8 +3,9 @@ from flask import Flask, render_template
 from dotenv import load_dotenv
 from flask_login import login_required, current_user
 from app.extensions import db, migrate, login_manager, mail
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from collections import defaultdict
+from flask_mail import Message
 
 
 def create_app():
@@ -40,6 +41,47 @@ def create_app():
         return User.query.get(int(user_id))
 
     # --------------------
+    # EMAIL: Upcoming renewals (FIXED)
+    # --------------------
+    def send_upcoming_renewals_email(user):
+        today = date.today()
+        limit = today + timedelta(days=7)
+
+        upcoming = []
+
+        for sub in user.subscriptions:
+            next_billing = calculate_next_billing(sub)
+            days_left = (next_billing - today).days
+
+            if 0 <= days_left <= 7:
+                upcoming.append((sub, next_billing, days_left))
+
+        if not upcoming:
+            return False
+
+        body = f"Hi {user.name},\n\n"
+        body += "You have the following subscriptions due soon:\n\n"
+
+        for sub, billing_date, days_left in upcoming:
+            body += (
+                f"• {sub.name}\n"
+                f"  Amount: ₹{sub.price}\n"
+                f"  Due Date: {billing_date.strftime('%d %b %Y')} "
+                f"({days_left} days left)\n\n"
+            )
+
+        body += "Please make sure your payment method is up to date.\n\n— SaaS Tracker"
+
+        msg = Message(
+            subject="⏰ Upcoming Subscription Payments",
+            recipients=[user.email],
+            body=body
+        )
+
+        mail.send(msg)
+        return True
+
+    # --------------------
     # Blueprints
     # --------------------
     from app.routes.auth import auth
@@ -61,9 +103,8 @@ def create_app():
     @login_required
     def dashboard():
         subscriptions = current_user.subscriptions
-        today = datetime.now().date()
+        today = date.today()
 
-        # Calculate next billing + status
         for sub in subscriptions:
             next_billing = calculate_next_billing(sub)
             sub.next_billing = next_billing
@@ -78,26 +119,19 @@ def create_app():
             else:
                 sub.status = "Active"
 
-        # Monthly total
         total_monthly = 0
+        yearly_total = 0
+
         for sub in subscriptions:
             if sub.frequency == "Monthly":
                 total_monthly += sub.price
-            elif sub.frequency == "Yearly":
-                total_monthly += sub.price / 12
-
-        # Yearly total
-        yearly_total = 0
-        for sub in subscriptions:
-            if sub.frequency == "Monthly":
                 yearly_total += sub.price * 12
             elif sub.frequency == "Yearly":
+                total_monthly += sub.price / 12
                 yearly_total += sub.price
 
-        # Upcoming (next 7 days)
         upcoming = [sub for sub in subscriptions if 0 <= sub.days_remaining <= 7]
 
-        # Category chart
         category_totals = defaultdict(float)
         for sub in subscriptions:
             category_totals[sub.category] += sub.price
@@ -105,7 +139,6 @@ def create_app():
         category_labels = list(category_totals.keys())
         category_values = list(category_totals.values())
 
-        # Monthly spending trend
         monthly_totals = defaultdict(float)
         for sub in subscriptions:
             month = sub.billing_date.strftime("%Y-%m")
@@ -126,6 +159,9 @@ def create_app():
             monthly_values=monthly_values,
         )
 
+    # expose email helper for test_email blueprint
+    app.send_upcoming_renewals_email = send_upcoming_renewals_email
+
     return app
 
 
@@ -133,7 +169,7 @@ def create_app():
 # Billing Date Calculator
 # --------------------
 def calculate_next_billing(sub):
-    today = datetime.now().date()
+    today = date.today()
     billing_date = sub.billing_date
 
     if sub.frequency == "Monthly":
