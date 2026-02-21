@@ -1,9 +1,9 @@
-from app.extensions import db
 from flask_login import UserMixin
+from app.extensions import db
 
 
 class User(db.Model, UserMixin):
-    __tablename__ = "users"   # Explicit table name
+    __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -12,7 +12,8 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(200), nullable=False)
 
     subscriptions = db.relationship(
-        'Subscription',
-        backref='owner',
-        lazy=True
+        "Subscription",
+        backref="user",              # ✅ sub.user
+        lazy=True,
+        cascade="all, delete-orphan"
     )

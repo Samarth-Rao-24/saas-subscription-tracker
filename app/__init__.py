@@ -2,10 +2,11 @@ import os
 from flask import Flask, render_template
 from dotenv import load_dotenv
 from flask_login import login_required, current_user
-from app.extensions import db, migrate, login_manager
+from app.extensions import db, migrate, login_manager, mail
 from datetime import datetime, timedelta
 from collections import defaultdict
-
+from apscheduler.schedulers.background import BackgroundScheduler
+from app.email_service import send_due_subscription_reminders
 
 def create_app():
     load_dotenv()
@@ -22,6 +23,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    mail.init_app(app)
     login_manager.login_view = "auth.login"
 
     from app.models import User, Subscription
@@ -32,9 +34,11 @@ def create_app():
 
     from app.routes.auth import auth
     from app.routes.subscription import subscription
+    from app.routes.test_email import test_email
 
     app.register_blueprint(auth)
     app.register_blueprint(subscription)
+    app.register_blueprint(test_email)
 
     @app.route("/")
     def home():
@@ -124,6 +128,11 @@ def create_app():
             monthly_values=monthly_values
         )
 
+    # ----------------------------------
+    # Start Background Jobs
+    # ----------------------------------
+    start_scheduler(app)
+
     return app
 
 
@@ -151,3 +160,32 @@ def calculate_next_billing(sub):
 
     return billing_date
 
+# ----------------------------------
+# Background Scheduler Setup
+# ----------------------------------
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(
+    func=send_due_subscription_reminders,
+    trigger='interval',
+    days=1
+)
+scheduler.start()
+
+
+def start_scheduler(app):
+    if not scheduler.running:
+        scheduler.add_job(
+            func=lambda: run_with_app_context(app),
+            trigger="interval",
+            minutes=60,  # change later (e.g. daily)
+            id="email_reminder_job",
+            replace_existing=True
+        )
+        scheduler.start()
+
+
+def run_with_app_context(app):
+    with app.app_context():
+        from app.utils.email_reminder import check_and_send_reminders
+        check_and_send_reminders()

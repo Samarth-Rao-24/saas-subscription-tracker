@@ -1,16 +1,15 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.models import Subscription
+from app.models.subscription import Subscription   # ✅ FIXED IMPORT
 from datetime import datetime
 import csv
 from io import StringIO
-from flask import Response
 
-subscription = Blueprint('subscription', __name__)
+subscription = Blueprint("subscription", __name__)
 
 
-@subscription.route('/add-subscription', methods=["GET", "POST"])
+@subscription.route("/add-subscription", methods=["GET", "POST"])
 @login_required
 def add_subscription():
     if request.method == "POST":
@@ -19,14 +18,15 @@ def add_subscription():
             price = request.form.get("price")
             billing_date = request.form.get("billing_date")
             category = request.form.get("category")
-            frequency=request.form.get("frequency")
+            frequency = request.form.get("frequency")
+
             new_sub = Subscription(
                 name=name,
                 price=float(price),
-                billing_date=datetime.strptime(billing_date, "%Y-%m-%d"),
+                billing_date=datetime.strptime(billing_date, "%Y-%m-%d").date(),
                 category=category,
                 frequency=frequency,
-                owner=current_user
+                user=current_user            # ✅ FIXED (THIS IS THE KEY)
             )
 
             db.session.add(new_sub)
@@ -35,8 +35,9 @@ def add_subscription():
             flash("Subscription added successfully.", "success")
             return redirect(url_for("dashboard"))
 
-        except Exception:
+        except Exception as e:
             db.session.rollback()
+            print("ADD SUB ERROR:", e)  # 👈 IMPORTANT FOR DEBUGGING
             flash("Something went wrong while adding subscription.", "danger")
             return redirect(url_for("subscription.add_subscription"))
 
@@ -75,16 +76,18 @@ def edit_subscription(id):
             sub.billing_date = datetime.strptime(
                 request.form.get("billing_date"),
                 "%Y-%m-%d"
-            )
+            ).date()
             sub.category = request.form.get("category")
+            sub.frequency = request.form.get("frequency")
 
             db.session.commit()
 
             flash("Subscription updated successfully.", "success")
             return redirect(url_for("dashboard"))
 
-        except Exception:
+        except Exception as e:
             db.session.rollback()
+            print("EDIT SUB ERROR:", e)
             flash("Something went wrong while updating.", "danger")
             return redirect(url_for("subscription.edit_subscription", id=id))
 
@@ -94,12 +97,12 @@ def edit_subscription(id):
 @subscription.route("/export")
 @login_required
 def export_subscription():
-    subscriptions =Subscription.query.filter_by(user_id=current_user.id).all()
+    subscriptions = Subscription.query.filter_by(user_id=current_user.id).all()
 
-    si=StringIO()
-    writer=csv.writer(si)
+    si = StringIO()
+    writer = csv.writer(si)
 
-    writer.writerow(["Name","Category","Price","Billing Date"])
+    writer.writerow(["Name", "Category", "Price", "Billing Date"])
 
     for sub in subscriptions:
         writer.writerow([
@@ -109,10 +112,10 @@ def export_subscription():
             sub.billing_date.strftime("%Y-%m-%d")
         ])
 
-    output=si.getvalue()
+    output = si.getvalue()
 
     return Response(
         output,
         mimetype="text/csv",
-        headers={"Content-Disposition":"attachment;filename=subscriptions.csv"}
+        headers={"Content-Disposition": "attachment;filename=subscriptions.csv"}
     )
