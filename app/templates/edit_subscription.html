@@ -6,6 +6,7 @@
 
     <form method="POST">
 
+        <!-- Name -->
         <div class="mb-3">
             <label class="form-label">Name</label>
             <input type="text"
@@ -15,6 +16,7 @@
                    required>
         </div>
 
+        <!-- Price -->
         <div class="mb-3">
             <label class="form-label">Price</label>
             <input type="number"
@@ -25,6 +27,7 @@
                    required>
         </div>
 
+        <!-- Billing Date -->
         <div class="mb-3">
             <label class="form-label">Billing Date</label>
             <input type="date"
@@ -34,9 +37,10 @@
                    required>
         </div>
 
+        <!-- Category -->
         <div class="mb-3">
             <label class="form-label">Category</label>
-            <select name="category" class="form-control">
+            <select name="category" class="form-control" required>
                 <option value="Entertainment" {% if sub.category == "Entertainment" %}selected{% endif %}>Entertainment</option>
                 <option value="Software" {% if sub.category == "Software" %}selected{% endif %}>Software</option>
                 <option value="Cloud" {% if sub.category == "Cloud" %}selected{% endif %}>Cloud</option>
@@ -48,6 +52,21 @@
             </select>
         </div>
 
+        <!-- ✅ FREQUENCY (THIS WAS MISSING) -->
+        <div class="mb-3">
+            <label class="form-label">Billing Frequency</label>
+            <select name="frequency" class="form-control" required>
+                <option value="">-- Select Frequency --</option>
+                <option value="Monthly" {% if sub.frequency == "Monthly" %}selected{% endif %}>
+                    Monthly
+                </option>
+                <option value="Yearly" {% if sub.frequency == "Yearly" %}selected{% endif %}>
+                    Yearly
+                </option>
+            </select>
+        </div>
+
+        <!-- Submit -->
         <button type="submit" class="btn btn-success">
             Update Subscription
         </button>

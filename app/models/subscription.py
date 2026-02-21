@@ -14,6 +14,8 @@ class Subscription(db.Model):
     category = db.Column(db.String(100), nullable=False, default="General")
     frequency = db.Column(db.String(20), nullable=False, default="Monthly")
 
+    last_reminder_sent=db.column(db.Date)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user_id = db.Column(

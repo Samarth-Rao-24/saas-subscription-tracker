@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.models.subscription import Subscription   # ✅ FIXED IMPORT
+from app.models.subscription import Subscription
 from datetime import datetime
 import csv
 from io import StringIO
@@ -9,6 +9,9 @@ from io import StringIO
 subscription = Blueprint("subscription", __name__)
 
 
+# ----------------------------------
+# Add Subscription
+# ----------------------------------
 @subscription.route("/add-subscription", methods=["GET", "POST"])
 @login_required
 def add_subscription():
@@ -26,7 +29,7 @@ def add_subscription():
                 billing_date=datetime.strptime(billing_date, "%Y-%m-%d").date(),
                 category=category,
                 frequency=frequency,
-                user=current_user            # ✅ FIXED (THIS IS THE KEY)
+                user=current_user
             )
 
             db.session.add(new_sub)
@@ -37,13 +40,16 @@ def add_subscription():
 
         except Exception as e:
             db.session.rollback()
-            print("ADD SUB ERROR:", e)  # 👈 IMPORTANT FOR DEBUGGING
+            print("ADD SUB ERROR:", e)
             flash("Something went wrong while adding subscription.", "danger")
             return redirect(url_for("subscription.add_subscription"))
 
     return render_template("add_subscription.html")
 
 
+# ----------------------------------
+# Delete Subscription
+# ----------------------------------
 @subscription.route("/delete-subscription/<int:id>")
 @login_required
 def delete_subscription(id):
@@ -60,6 +66,9 @@ def delete_subscription(id):
     return redirect(url_for("dashboard"))
 
 
+# ----------------------------------
+# Edit Subscription
+# ----------------------------------
 @subscription.route("/edit-subscription/<int:id>", methods=["GET", "POST"])
 @login_required
 def edit_subscription(id):
@@ -94,6 +103,9 @@ def edit_subscription(id):
     return render_template("edit_subscription.html", sub=sub)
 
 
+# ----------------------------------
+# Export Subscriptions (CSV)
+# ----------------------------------
 @subscription.route("/export")
 @login_required
 def export_subscription():
@@ -102,14 +114,16 @@ def export_subscription():
     si = StringIO()
     writer = csv.writer(si)
 
-    writer.writerow(["Name", "Category", "Price", "Billing Date"])
+    # ✅ Added Frequency column
+    writer.writerow(["Name", "Category", "Price", "Frequency", "Billing Date"])
 
     for sub in subscriptions:
         writer.writerow([
             sub.name,
             sub.category,
             sub.price,
-            sub.billing_date.strftime("%Y-%m-%d")
+            sub.frequency,
+            sub.billing_date.strftime("%Y-%m-%d") if sub.billing_date else ""
         ])
 
     output = si.getvalue()
@@ -117,5 +131,5 @@ def export_subscription():
     return Response(
         output,
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment;filename=subscriptions.csv"}
+        headers={"Content-Disposition": "attachment; filename=subscriptions.csv"}
     )
