@@ -127,8 +127,8 @@ The application sends automated email reminders for subscriptions that are due w
 
 ## 🤝 Contributors
 
-- Samarth H Rao
 - Aditi M Jambha 
+- Samarth H Rao
 
 ---
 
